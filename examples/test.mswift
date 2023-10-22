@@ -1,0 +1,4 @@
+let floatValue: Float = 3.14 
+let boolValue: Bool = floatValue != 0.0 
+
+print(boolValue)
