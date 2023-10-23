@@ -12,6 +12,7 @@ import interpreter.type.primitive.BoolType;
 import interpreter.type.primitive.CharType;
 import interpreter.type.primitive.FloatType;
 import interpreter.type.primitive.IntType;
+import interpreter.type.primitive.StringType;
 import interpreter.value.Value;
 
 public class CastExpr extends Expr {
@@ -27,7 +28,7 @@ public class CastExpr extends Expr {
     private CastOp op;
     private Expr expr;
 
-    protected CastExpr(int line, CastOp op, Expr expr) {
+    public CastExpr(int line, CastOp op, Expr expr) {
         super(line);
         this.op = op;
         this.expr = expr;
@@ -38,7 +39,6 @@ public class CastExpr extends Expr {
     public Value expr() {
         Value value = expr.expr();
         Value ret = null;
-
         switch(op){
             case ToBoolOp:
                 ret = toBoolOp(value);
@@ -66,21 +66,21 @@ public class CastExpr extends Expr {
         //Tem que completar
          BoolType boolType = BoolType.instance();
         if (boolType.match(value.type)) {
-            Boolean val = (Boolean) value.data;
-            String valued = Boolean.toString(val);
-            return new Value(StringType.instance(),valued );
+            Boolean boolValue = (Boolean) value.data;
+            String stringValue = Boolean.toString(boolValue);
+            return new Value(StringType.instance(), stringValue);
         } else if (value.type instanceof IntType) {
             int intValue = (int) value.data;
-            boolean boolValue = intValue != 0;
-            return new Value(BoolType.instance(), boolValue);
+            String stringValue = Integer.toString(intValue);
+            return new Value(BoolType.instance(), stringValue);
         } else if(value.type instanceof CharType){
             char charValue = (char) value.data;
-            boolean boolValue = charValue != 0; 
-            return new Value(BoolType.instance(), boolValue);
+            String stringValue = Character.toString(charValue); 
+            return new Value(BoolType.instance(), stringValue);
         } else if (value.type instanceof FloatType) {
             float floatValue = (float) value.data;
-            boolean boolValue = floatValue != 0.0; 
-            return new Value(BoolType.instance(), boolValue);
+            String stringValue = Float.toString(floatValue); 
+            return new Value(BoolType.instance(), stringValue);
         } else if (value.type instanceof ArrayType) {
             // List<Value> arrayValue = (List<Value>) value.data;
             // boolean boolValue = !arrayValue.isEmpty();

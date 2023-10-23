@@ -22,6 +22,7 @@ import interpreter.command.PrintCommand;
 import interpreter.command.WhileCommand;
 import interpreter.expr.ActionExpr;
 import interpreter.expr.BinaryExpr;
+import interpreter.expr.CastExpr;
 import interpreter.expr.ConstExpr;
 import interpreter.expr.Expr;
 import interpreter.expr.SetExpr;
@@ -630,7 +631,7 @@ public class SyntaticAnalysis {
             expr = procAction();
         } else if (check(Token.Type.TO_BOOL, Token.Type.TO_INT,
                 Token.Type.TO_FLOAT, Token.Type.TO_CHAR, Token.Type.TO_STRING)) {
-            procCast();
+            expr = procCast();
         } else if (check(Token.Type.ARRAY)) {
             procArray();
         } else if (check(Token.Type.DICT)) {
@@ -714,15 +715,44 @@ public class SyntaticAnalysis {
     }
 
     // <cast> ::= ( toBool | toInt | toFloat | toChar | toString ) '(' <expr> ')'
-    private void procCast() {
+    private CastExpr procCast() {
+        int line = current.line;
+        CastExpr castExpr = new CastExpr(0, null, null);
+        Token castType = new Token(null, null, null);
         if(match(Token.Type.TO_BOOL, Token.Type.TO_INT, Token.Type.TO_FLOAT, Token.Type.TO_CHAR, Token.Type.TO_STRING)){
-            // Do nothing.
+            if(previous.type == Token.Type.TO_BOOL){
+                castType.type = Token.Type.TO_BOOL;
+            } else if (previous.type == Token.Type.TO_INT){
+                castType.type = Token.Type.TO_INT;
+            } else if (previous.type == Token.Type.TO_CHAR){
+                castType.type = Token.Type.TO_CHAR;
+            } else if (previous.type == Token.Type.TO_FLOAT){
+                castType.type = Token.Type.TO_FLOAT;
+            } else if (previous.type == Token.Type.TO_STRING){
+                castType.type = Token.Type.TO_STRING;
+            } else{
+                System.out.println("Unreachable");
+            }
         } else {
             reportError();
         }
         eat(Token.Type.OPEN_PAR);
-        procExpr();
+        Expr expr = procExpr();
+        if(castType.type == Token.Type.TO_BOOL){
+            castExpr = new CastExpr(line, CastExpr.CastOp.ToBoolOp,expr);
+        } else if (castType.type == Token.Type.TO_INT){
+            castExpr = new CastExpr(line, CastExpr.CastOp.ToIntOp,expr);
+        } else if (castType.type == Token.Type.TO_CHAR){
+            castExpr = new CastExpr(line, CastExpr.CastOp.ToCharOp,expr);
+        } else if (castType.type == Token.Type.TO_FLOAT){
+            castExpr = new CastExpr(line, CastExpr.CastOp.ToFloatOp, expr);
+        } else if (castType.type == Token.Type.TO_STRING){
+            castExpr = new CastExpr(line, CastExpr.CastOp.ToStringOp, expr);
+        } else{
+            System.out.println("Unreachable");
+        }
         eat(Token.Type.CLOSE_PAR);
+        return castExpr;
     }
 
     // <array> ::= <arraytype> '(' [ <expr> { ',' <expr> } ] ')'
