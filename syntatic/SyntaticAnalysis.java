@@ -365,12 +365,14 @@ public class SyntaticAnalysis {
         int line = previous.line;
         Token name;
         Type type;
-        Variable v;
+        Variable v = null;
+        Boolean declared = false;
 
         if(match(Token.Type.VAR, Token.Type.LET)){
             name = procName();
             eat(Token.Type.COLON);
             type = procType();
+            declared = true;
             v = this.environment.declare(name, type, false);
         } else{
             name = procName();

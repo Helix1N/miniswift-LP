@@ -150,6 +150,7 @@ public class BinaryExpr extends Expr {
 
     private Value lowerThanOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
+        CharType charType = CharType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -159,6 +160,13 @@ public class BinaryExpr extends Expr {
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
             }
+        } else if (charType.match(lvalue.type)) {
+            if (charType.match(rvalue.type)) {
+                char m = (char) lvalue.data;
+                char n = (char) rvalue.data;
+                Value v = new Value(BoolType.instance(), (m < n));
+                return v;
+            } 
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }

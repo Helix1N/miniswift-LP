@@ -23,8 +23,8 @@ public class ForCommand extends Command {
     public void execute() {
         //não esta funcionando
         Value iterable = expr.expr();
-        System.out.println(iterable.data);
-        System.out.println(iterable.type);
+        //System.out.println(iterable.data);
+        //System.out.println(iterable.type);
         if (!(iterable.data instanceof Iterable<?>) && !(iterable.data instanceof String) ) {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, "Iterable expected");
         }

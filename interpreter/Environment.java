@@ -34,6 +34,11 @@ public class Environment {
         return var;
     }
 
+    public void remove(Variable var) {
+        if (memory.containsKey(var.getName()))
+            memory.remove(var.getName(), var);
+    }
+
     public Variable get(Token name) {
         if (memory.containsKey(name.lexeme))
             return memory.get(name.lexeme);
