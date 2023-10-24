@@ -1,6 +1,15 @@
 package interpreter.expr;
 
+
+import java.util.HashMap;
+
+import interpreter.type.composed.ArrayType;
+import interpreter.type.composed.DictType;
+import interpreter.type.primitive.BoolType;
+import interpreter.type.primitive.IntType;
+import interpreter.type.primitive.StringType;
 import interpreter.value.Value;
+import java.util.List;
 
 public class FunctionExpr extends Expr {
     public static enum FunctionOp{
@@ -16,7 +25,7 @@ public class FunctionExpr extends Expr {
     private Expr expr;
     private Expr arg;
 
-    protected FunctionExpr(int line, FunctionOp op, Expr expr, Expr arg) {
+    public FunctionExpr(int line, FunctionOp op, Expr expr, Expr arg) {
         super(line);
         this.op = op;
         this.expr = expr;
@@ -26,7 +35,9 @@ public class FunctionExpr extends Expr {
     @Override
     public Value expr() {
         Value value = expr.expr();
-        Value varg = arg.expr();
+        Value varg = null;
+        if(arg != null)
+            varg = arg.expr();
         Value ret = null;
         switch(op){
             case Count:
@@ -70,18 +81,56 @@ public class FunctionExpr extends Expr {
     }
 
     private Value keysOp(Value value, Value varg) {
-        //Tem que completar
-        return null;
+          if (arg != null) {
+        throw new UnsupportedOperationException("Operação 'keys' não suporta argumentos");
+    }
+   
+    if (value.type instanceof DictType) {
+        DictExpr dict = (DictExpr) value.data;
+        Value dictValue = dict.expr();
+        HashMap<Value,Value> hashValue = (HashMap<Value, Value>) dictValue.data;
+        List<Value> listValue = (List<Value>) hashValue.keySet();
+        return new Value(ArrayType.instance(dict.getType()), listValue);
+    } else {
+        throw new UnsupportedOperationException("Operação 'keys' não suportada para o tipo de valor fornecido");
+    }
     }
 
     private Value emptyOp(Value value, Value varg) {
-        //Tem que completar
-        return null;
+        if (arg != null) {
+        throw new UnsupportedOperationException("Operação 'empty' não suporta argumentos");
+    }
+    if (value.type instanceof StringType) {
+        String str = (String) value.data;
+        return new Value(BoolType.instance(), str == null);
+    } else if (value.type instanceof ArrayType) {
+       ArrayExpr arrayValue = (ArrayExpr) value.data;
+        return new Value(BoolType.instance(),arrayValue == null);
+    } else if (value.type instanceof DictType) {
+        DictExpr dict = (DictExpr) value.data;
+        return new Value(BoolType.instance(), dict == null);
+    } else {
+        throw new UnsupportedOperationException("Operação 'empty' não suportada para o tipo de valor fornecido");
+    }
     }
 
-    private Value countOp(Value value, Value arg2) {
-        //Tem que completar
-        return null;
+    private Value countOp(Value value, Value varg) {
+        int count = 0;
+        if (varg != null) {
+        throw new IllegalArgumentException("A função 'count' não aceita argumentos.");
+    }
+    if (value.type instanceof StringType) {
+        String stringValue = (String) value.data;
+        count = stringValue.length();
+        return new Value(IntType.instance(), count);
+    } else if (value.type instanceof ArrayType) {
+        ArrayExpr arrayValue = (ArrayExpr) value.data;
+        String count2 = arrayValue.toString();
+        count = count2.length();
+        return new Value(IntType.instance(), count);
+    } else {
+        throw new IllegalArgumentException("A função 'count' só pode ser aplicada a strings ou arrays.");
+    }
     }
     
 }

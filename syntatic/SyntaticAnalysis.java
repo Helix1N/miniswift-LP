@@ -21,15 +21,21 @@ import interpreter.command.InitializeCommand;
 import interpreter.command.PrintCommand;
 import interpreter.command.WhileCommand;
 import interpreter.expr.ActionExpr;
+import interpreter.expr.ArrayExpr;
 import interpreter.expr.BinaryExpr;
 import interpreter.expr.CastExpr;
 import interpreter.expr.ConstExpr;
+import interpreter.expr.DictExpr;
+import interpreter.expr.DictItem;
 import interpreter.expr.Expr;
+import interpreter.expr.FunctionExpr;
 import interpreter.expr.SetExpr;
 import interpreter.expr.UnaryExpr;
 import interpreter.expr.Variable;
 import interpreter.type.Type;
+import interpreter.type.composed.ArrayType;
 import interpreter.type.composed.ComposedType;
+import interpreter.type.composed.DictType;
 import interpreter.type.primitive.BoolType;
 import interpreter.type.primitive.CharType;
 import interpreter.type.primitive.FloatType;
@@ -212,7 +218,7 @@ public class SyntaticAnalysis {
         Variable v = this.environment.declare(name, type, false);
 
         List<Command> cmds = new ArrayList<Command>();
-        InitializeCommand icmd; // = new InitializeCommand(0,null,null);
+        InitializeCommand icmd;// = new InitializeCommand(0,null,null);
         //cmds.add(icmd);
 
         if (match(Token.Type.ASSIGN)) {
@@ -238,11 +244,10 @@ public class SyntaticAnalysis {
                 assigned = true;
             }
         }
-        if (!assigned) {
-            icmd = new InitializeCommand(0,null,null);
+        if(!assigned){
+            icmd = new InitializeCommand(0, null, null);
             cmds.add(icmd);
-        } 
-            
+        }
         match(Token.Type.SEMICOLON);
         BlocksCommand bcmd = new BlocksCommand(bline, cmds);
         return bcmd;
@@ -354,7 +359,7 @@ public class SyntaticAnalysis {
 
     // <for> ::= for ( <name> | ( var | let ) <name> ':' <type> ) in <expr> <cmd>
     private ForCommand procFor() {
-
+        //Tem que implementar corretamente
         eat(Token.Type.FOR);
 
         int line = previous.line;
@@ -366,7 +371,7 @@ public class SyntaticAnalysis {
             name = procName();
             eat(Token.Type.COLON);
             type = procType();
-            v = this.environment.declare(name, type, true);
+            v = this.environment.declare(name, type, false);
         } else{
             name = procName();
             v = this.environment.get(name);
@@ -440,10 +445,15 @@ public class SyntaticAnalysis {
 
     // <composed> ::= <arraytype> | <dicttype>
     private ComposedType procComposed() {
-        if (check(Token.Type.ARRAY)) {
-            procArrayType();
-        } else if (check(Token.Type.DICT)) {
-            procDictType();
+         if (check(Token.Type.ARRAY, Token.Type.DICT)) {
+            switch (current.type) {
+                case ARRAY:
+                    return procArrayType();
+                case DICT:
+                    return procDictType();
+                default:
+                    reportError();
+            }
         } else {
             reportError();
         }
@@ -452,21 +462,23 @@ public class SyntaticAnalysis {
     }
 
     // <arraytype> ::= Array '<' <type> '>'
-    private void procArrayType() {
+    private ArrayType procArrayType() {
         eat(Token.Type.ARRAY);
         eat(Token.Type.LOWER_THAN);
-        procType();
+        Type type = procType();
         eat(Token.Type.GREATER_THAN);
+        return ArrayType.instance(type);
     }
 
     // <dicttype> ::= Dict '<' <type> ',' <type> '>'
-    private void procDictType() {
+    private DictType procDictType() {
         eat(Token.Type.DICT);
         eat(Token.Type.LOWER_THAN);
-        procType();
+        Type type = procType();
         eat(Token.Type.COMMA);
-        procType();
+        Type type2 = procType();
         eat(Token.Type.GREATER_THAN);
+        return DictType.instance(type, type2);
     }
 
     // <expr> ::= <cond> [ '?' <expr> ':' <expr> ]
@@ -474,9 +486,9 @@ public class SyntaticAnalysis {
         Expr expr = procCond();
 
         if (match(Token.Type.TERNARY)) {
-            procExpr();
+            expr = procExpr();
             eat(Token.Type.COLON);
-            procExpr();
+            expr = procExpr();
         }
 
         return expr;
@@ -484,6 +496,29 @@ public class SyntaticAnalysis {
 
     // <cond> ::= <rel> { ( '&&' | '||' ) <rel> }
     private Expr procCond() {
+        // Corrigir possivel implementacao.
+        // Expr left = procRel();
+        // Expr cond = new BinaryExpr(0, null, null, null);
+        // while (match(Token.Type.AND, Token.Type.OR)) {
+        //     int line = previous.line;
+        //     Expr right;
+        //     BinaryExpr.Op op;
+        //      switch (previous.type) {
+        //         case AND:
+        //             op = BinaryExpr.Op.And;
+        //             break;
+        //         case OR:
+        //             op = BinaryExpr.Op.Or;
+        //             break;
+        //         default:
+        //             throw new InternalError("Unreachable");
+        //     }
+            
+        //     right = procRel();
+        //     cond = new BinaryExpr(line, left, op, right);
+        // }
+        // ConditionalExpr cexpr = new ConditionalExpr(current.line, cond, left, left);
+        // return cexpr;
         Expr left = procRel();
         while (match(Token.Type.AND, Token.Type.OR)) {
             int line = previous.line;
@@ -614,10 +649,10 @@ public class SyntaticAnalysis {
         } else {
             expr = procRValue();
         }
+        Expr expr1;
+        expr1 = procFunction(expr);
 
-        procFunction();
-
-        return expr;
+        return expr1;
     }
 
     // <rvalue> ::= <const> | <action> | <cast> | <array> | <dict> | <lvalue>
@@ -631,11 +666,11 @@ public class SyntaticAnalysis {
             expr = procAction();
         } else if (check(Token.Type.TO_BOOL, Token.Type.TO_INT,
                 Token.Type.TO_FLOAT, Token.Type.TO_CHAR, Token.Type.TO_STRING)) {
-            expr = procCast();
+             expr = procCast();
         } else if (check(Token.Type.ARRAY)) {
-            procArray();
+            expr = procArray();
         } else if (check(Token.Type.DICT)) {
-            procDict();
+            expr = procDict();
         } else if (check(Token.Type.NAME)) {
             expr = procLValue();
         } else {
@@ -716,73 +751,78 @@ public class SyntaticAnalysis {
 
     // <cast> ::= ( toBool | toInt | toFloat | toChar | toString ) '(' <expr> ')'
     private CastExpr procCast() {
-        int line = current.line;
-        CastExpr castExpr = new CastExpr(0, null, null);
-        Token castType = new Token(null, null, null);
+        CastExpr.CastOp op = null;
         if(match(Token.Type.TO_BOOL, Token.Type.TO_INT, Token.Type.TO_FLOAT, Token.Type.TO_CHAR, Token.Type.TO_STRING)){
-            if(previous.type == Token.Type.TO_BOOL){
-                castType.type = Token.Type.TO_BOOL;
-            } else if (previous.type == Token.Type.TO_INT){
-                castType.type = Token.Type.TO_INT;
-            } else if (previous.type == Token.Type.TO_CHAR){
-                castType.type = Token.Type.TO_CHAR;
-            } else if (previous.type == Token.Type.TO_FLOAT){
-                castType.type = Token.Type.TO_FLOAT;
-            } else if (previous.type == Token.Type.TO_STRING){
-                castType.type = Token.Type.TO_STRING;
-            } else{
-                System.out.println("Unreachable");
+            switch (previous.type){
+                case TO_BOOL:
+                op = CastExpr.CastOp.ToBoolOp;
+                break;
+                case TO_INT:
+                op = CastExpr.CastOp.ToIntOp;
+                break;
+                case TO_FLOAT:
+                op = CastExpr.CastOp.ToFloatOp;
+                break;
+                case TO_CHAR:
+                op = CastExpr.CastOp.ToCharOp;
+                break;
+                case TO_STRING:
+                op = CastExpr.CastOp.ToStringOp;
+                break;
+                default:
+                    throw new InternalException("Unrecheable");
             }
         } else {
             reportError();
         }
+        int line = previous.line;
         eat(Token.Type.OPEN_PAR);
         Expr expr = procExpr();
-        if(castType.type == Token.Type.TO_BOOL){
-            castExpr = new CastExpr(line, CastExpr.CastOp.ToBoolOp,expr);
-        } else if (castType.type == Token.Type.TO_INT){
-            castExpr = new CastExpr(line, CastExpr.CastOp.ToIntOp,expr);
-        } else if (castType.type == Token.Type.TO_CHAR){
-            castExpr = new CastExpr(line, CastExpr.CastOp.ToCharOp,expr);
-        } else if (castType.type == Token.Type.TO_FLOAT){
-            castExpr = new CastExpr(line, CastExpr.CastOp.ToFloatOp, expr);
-        } else if (castType.type == Token.Type.TO_STRING){
-            castExpr = new CastExpr(line, CastExpr.CastOp.ToStringOp, expr);
-        } else{
-            System.out.println("Unreachable");
-        }
         eat(Token.Type.CLOSE_PAR);
-        return castExpr;
+        CastExpr cexpr = new CastExpr(line, op, expr);
+        return cexpr;
     }
 
     // <array> ::= <arraytype> '(' [ <expr> { ',' <expr> } ] ')'
-    private void procArray() {
-        procArrayType();
+    private ArrayExpr procArray() {
+        ArrayType type = procArrayType();
+        List<Expr> expr = new ArrayList<Expr>();
+        Expr carry;
         eat(Token.Type.OPEN_PAR);
         if (!check(Token.Type.CLOSE_PAR)) {
-            procExpr();
+            carry = procExpr();
+            expr.add(carry);
             while (match(Token.Type.COMMA)) {
-                procExpr();
+                carry = procExpr();
+                expr.add(carry);
             }
         }
         eat(Token.Type.CLOSE_PAR);
+        ArrayExpr arexpr = new ArrayExpr(current.line, type, expr);
+        return arexpr;
     }
 
     // <dict> ::= <dictype> '(' [ <expr> ':' <expr> { ',' <expr> ':' <expr> } ] ')'
-    private void procDict() {
-        procDictType();
+    private DictExpr procDict() {
+        DictType type = procDictType();
+        List<DictItem> expr = new ArrayList<DictItem>();
+        DictItem carry = new DictItem(null, null);
         eat(Token.Type.OPEN_PAR);
         if(!check(Token.Type.CLOSE_PAR)){
-            procExpr();
+            carry.key = procExpr();
             eat(Token.Type.COLON);
-            procExpr();
+            carry.value = procExpr();
+            expr.add(carry);
             while (match(Token.Type.COMMA)){
-                procExpr();
+                carry.key = procExpr();
                 eat(Token.Type.COLON);
-                procExpr();
+                carry.value = procExpr();
+                expr.add(carry);
             }
         }
         eat(Token.Type.CLOSE_PAR);
+        DictExpr dexpr = new DictExpr(current.line, type,expr);
+        return dexpr;
     }
 
     // <lvalue> ::= <name> { '[' <expr> ']' }
@@ -800,38 +840,69 @@ public class SyntaticAnalysis {
     }
 
     // <function> ::= { '.' ( <fnoargs> | <fonearg> ) }
-    private void procFunction() {
+    private Expr procFunction(Expr expr) {
+        //Tem que implementar
+        Expr functionExpr = expr;
         while(match(Token.Type.DOT)){
             if(check(Token.Type.COUNT, Token.Type.EMPTY,Token.Type.KEYS,Token.Type.VALUES)){
-                procFNoArgs();
+                functionExpr = procFNoArgs(expr);
             } else{
-                procFOneArg();
+                functionExpr = procFOneArg(expr);
             }
 
             }
+            return functionExpr;
     }
 
     // <fnoargs> ::= ( count | empty | keys | values ) '(' ')'
-    private void procFNoArgs() {
+    private FunctionExpr procFNoArgs(Expr expr) {
+        //Tem que implementar
+        int line = current.line;
+        FunctionExpr functionExpr = new FunctionExpr(line,null,expr, null);;
         if(match(Token.Type.COUNT, Token.Type.EMPTY, Token.Type.KEYS, Token.Type.VALUES)){
-            // Do nothing
+            switch (previous.type){
+                case COUNT:
+                    functionExpr = new FunctionExpr(line,FunctionExpr.FunctionOp.Count,expr, null);
+                break;
+                case EMPTY:
+                    functionExpr = new FunctionExpr(line,FunctionExpr.FunctionOp.Empty,expr, null);
+                break;
+                case KEYS:
+                    functionExpr = new FunctionExpr(line,FunctionExpr.FunctionOp.Keys,expr, null);
+                break;
+                case VALUES:
+                    functionExpr = new FunctionExpr(line,FunctionExpr.FunctionOp.Values,expr, null);
+                break;
+                default:
+                    throw new InternalException("Unrecheable");
+            }
         } else {
             reportError();
         }
         eat(Token.Type.OPEN_PAR);
         eat(Token.Type.CLOSE_PAR);
+        return functionExpr;
     }
 
     // <fonearg> ::= ( append | contains ) '(' <expr> ')'
-    private void procFOneArg() {
+    private Expr procFOneArg(Expr expr) {
+        //Tem que implementar
         if(match(Token.Type.APPEND, Token.Type.CONTAINS)){
-            // Do nothing.
+             switch (previous.type){
+                case APPEND:
+                break;
+                case CONTAINS:
+                break;
+                default:
+                    throw new InternalException("Unrecheable");
+            }
        } else {
            reportError();
        }
        eat(Token.Type.OPEN_PAR);
-       procExpr();
+       Expr expr1 = procExpr();
        eat(Token.Type.CLOSE_PAR);
+       return null;
     }
 
     private Token procName() {

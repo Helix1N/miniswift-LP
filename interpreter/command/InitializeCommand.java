@@ -17,7 +17,7 @@ public class InitializeCommand extends Command {
 
     @Override
     public void execute() {
-        if(this.var != null){
+        if(var != null){
             Value v = expr.expr();
             var.initialize(v);
         }

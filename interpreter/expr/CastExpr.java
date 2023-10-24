@@ -1,9 +1,5 @@
 package interpreter.expr;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import error.LanguageException;
 import interpreter.type.composed.ArrayType;
@@ -39,6 +35,7 @@ public class CastExpr extends Expr {
     public Value expr() {
         Value value = expr.expr();
         Value ret = null;
+
         switch(op){
             case ToBoolOp:
                 ret = toBoolOp(value);
@@ -63,103 +60,53 @@ public class CastExpr extends Expr {
     }
 
     private Value toStringOP(Value value) {
-        //Tem que completar
-         BoolType boolType = BoolType.instance();
-        if (boolType.match(value.type)) {
-            Boolean boolValue = (Boolean) value.data;
-            String stringValue = Boolean.toString(boolValue);
-            return new Value(StringType.instance(), stringValue);
-        } else if (value.type instanceof IntType) {
-            int intValue = (int) value.data;
-            String stringValue = Integer.toString(intValue);
-            return new Value(StringType.instance(), stringValue);
-        } else if(value.type instanceof CharType){
-            char charValue = (char) value.data;
-            String stringValue = Character.toString(charValue); 
-            return new Value(StringType.instance(), stringValue);
-        } else if (value.type instanceof FloatType) {
-            float floatValue = (float) value.data;
-            String stringValue = Float.toString(floatValue); 
-            return new Value(StringType.instance(), stringValue);
-        } else if (value.type instanceof StringType) {
-            return value;
-        }else {
-            throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, value.type.toString());
-        }
+        return new Value(StringType.instance(), value.data.toString());
     }
 
     private Value toCharOp(Value value) {
-        //Tem que completar
-        return null;
+        CharType charType = CharType.instance();
+        if (charType.match(value.type)) {
+            return value;
+        } else if(value.type instanceof IntType){
+            int intValue = (int) value.data;
+            char charValue = (char) intValue;
+            return new Value(CharType.instance(),charValue);
+        } else{
+            return new Value(charType.instance(), '\0');
+        }
     }
 
     private Value toFloatOp(Value value) {
-        //Tem que completar
-        BoolType boolType = BoolType.instance();
-        if (boolType.match(value.type)) {
-            boolean boolValue = (boolean) value.data;
-            float floatValue;
-            if (boolValue)
-                floatValue = 1;
-            else 
-                floatValue = 0;
-            return new Value(FloatType.instance(), floatValue);
+        FloatType floatType = FloatType.instance();
+        if (floatType.match(value.type)) {
+            return value;
+        } else if (value.type instanceof CharType) {
+            char charValue = (char) value.data;
+            float floatValue = (float) charValue;
+            return new Value(IntType.instance(), floatValue);
         } else if (value.type instanceof IntType) {
             int intValue = (int) value.data;
-            float floatValue = (float) ((float) intValue + 0.0);
-            return new Value(FloatType.instance(), floatValue);
-        } else if(value.type instanceof CharType){
-            char charValue = (char) value.data;
-            float floatValue = (float) Character.getNumericValue(charValue); 
-            return new Value(FloatType.instance(), floatValue);
-        } else if (value.type instanceof FloatType) {
-            return value;
-        } else if (value.type instanceof StringType){
-            String stringValue = (String) value.data;
-            float floatValue = 0;
-            try {
-                floatValue = Float.parseFloat(stringValue);
-            } catch (Exception e) {
-                throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidOperation, value.data.toString() + " is not a number.");
-            }
-            return new Value(FloatType.instance(), floatValue);
-        }  else {
-            throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, value.type.toString());
+            float floatValue = (float) intValue;
+            return new Value(IntType.instance(), floatValue);
+        } else {
+            return new Value(floatType.instance(), 0.0);
         }
     }
 
     private Value toIntOp(Value value) {
-        //Tem que completar
-        BoolType boolType = BoolType.instance();
-        if (boolType.match(value.type)) {
-            boolean boolValue = (boolean) value.data;
-            int intValue;
-            if (boolValue)
-                intValue = 1;
-            else 
-                intValue = 0;
-            return new Value(IntType.instance(), intValue);
-        } else if (value.type instanceof IntType) {
+        IntType intType = IntType.instance();
+        if (intType.match(value.type)) {
             return value;
-        } else if(value.type instanceof CharType){
+        } else if (value.type instanceof CharType) {
             char charValue = (char) value.data;
-            int intValue = Character.getNumericValue(charValue); 
+            int intValue = (int) charValue;
             return new Value(IntType.instance(), intValue);
         } else if (value.type instanceof FloatType) {
             float floatValue = (float) value.data;
-            int intValue = Math.round(floatValue); 
-            return new Value(IntType.instance(), intValue);
-        } else if (value.type instanceof StringType){
-            String stringValue = (String) value.data;
-            int intValue = 0;
-            try {
-                intValue = Integer.parseInt(stringValue);
-            } catch (Exception e) {
-                throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidOperation, value.data.toString() + " is not a number.");
-            }
-            return new Value(IntType.instance(), intValue);
-        }  else {
-            throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, value.type.toString());
+            Integer intValue = (int) floatValue;
+            return new Value(IntType.instance(), intValue.intValue());
+        } else {
+            return new Value(intType.instance(), 0);
         }
     }
 
@@ -180,11 +127,15 @@ public class CastExpr extends Expr {
             float floatValue = (float) value.data;
             boolean boolValue = floatValue != 0.0; 
             return new Value(BoolType.instance(), boolValue);
-        } else if (value.type instanceof StringType){
-            String stringValue = (String) value.data;
-            boolean boolValue = !stringValue.equals("");
+        } else if (value.type instanceof ArrayType) {
+            ArrayExpr arrayValue = (ArrayExpr) value.data;
+            boolean boolValue = arrayValue != null;
+             return new Value(BoolType.instance(), boolValue);
+        } else if (value.type instanceof DictType) {
+            DictExpr dictValue = (DictExpr) value.data;
+            boolean boolValue = dictValue != null;
             return new Value(BoolType.instance(), boolValue);
-        }  else {
+        } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, value.type.toString());
         }
     }

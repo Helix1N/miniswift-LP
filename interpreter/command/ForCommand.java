@@ -4,6 +4,7 @@ import error.LanguageException;
 import interpreter.expr.Expr;
 import interpreter.expr.Variable;
 import interpreter.value.Value;
+import interpreter.type.primitive.StringType;
 
 public class ForCommand extends Command {
 
@@ -22,13 +23,22 @@ public class ForCommand extends Command {
     public void execute() {
         //não esta funcionando
         Value iterable = expr.expr();
-        if (!(iterable.data instanceof Iterable<?>)) {
+        System.out.println(iterable.data);
+        System.out.println(iterable.type);
+        if (!(iterable.data instanceof Iterable<?>) && !(iterable.data instanceof String) ) {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, "Iterable expected");
         }
-
-        for (Object item : (Iterable<?>) iterable.data) {
-            var.setValue(new Value(var.getType(), item));
-            cmds.execute();
+        if (!(iterable.data instanceof String)){
+            for (Object item : (Iterable<?>) iterable.data) {
+                var.setValue(new Value(var.getType(), item));
+                cmds.execute();
+            }
+        } else {
+            String stringData = (String) iterable.data;
+            for (char ch : stringData.toCharArray()) {
+                var.setValue(new Value(var.getType(), ch));
+                cmds.execute();
+                }
         }
     }
     //     Value initialValue = expr.expr(); 

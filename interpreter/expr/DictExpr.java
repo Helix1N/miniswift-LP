@@ -1,5 +1,6 @@
 package interpreter.expr;
 
+import interpreter.type.Type;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,7 +11,7 @@ public class DictExpr extends Expr{
     private DictType type;
     private List<DictItem> items;
 
-    protected DictExpr(int line, DictType type, List<DictItem> items) {
+    public DictExpr(int line, DictType type, List<DictItem> items) {
         super(line);
         this.type = type;
         this.items = items;
@@ -26,5 +27,9 @@ public class DictExpr extends Expr{
         }
         //Possivelmente errado
         return new Value(type, dictMap);
+    }
+    
+    public Type getType(){
+        return this.type;
     }
 }
