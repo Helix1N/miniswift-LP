@@ -1,6 +1,8 @@
 package interpreter.command;
 
 import error.LanguageException;
+import interpreter.Environment;
+import interpreter.Interpreter;
 import interpreter.expr.Expr;
 import interpreter.expr.Variable;
 import interpreter.value.Value;
@@ -40,6 +42,7 @@ public class ForCommand extends Command {
                 cmds.execute();
                 }
         }
+        
     }
     //     Value initialValue = expr.expr(); 
     //     BoolType boolType = BoolType.instance();

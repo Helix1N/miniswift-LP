@@ -3,13 +3,18 @@ package interpreter.expr;
 
 import java.util.HashMap;
 
+import interpreter.type.Type;
+import interpreter.type.Type.Category;
 import interpreter.type.composed.ArrayType;
 import interpreter.type.composed.DictType;
 import interpreter.type.primitive.BoolType;
 import interpreter.type.primitive.IntType;
 import interpreter.type.primitive.StringType;
+import interpreter.type.primitive.CharType;
 import interpreter.value.Value;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class FunctionExpr extends Expr {
     public static enum FunctionOp{
@@ -66,7 +71,19 @@ public class FunctionExpr extends Expr {
     }
 
     private Value containsOp(Value value, Value varg) {
-        //Tem que completar
+            if (value.type.getCategory() == Category.Dict){
+                DictType dictType = (DictType) value.type;
+                Type innerType = dictType.getKeyType();
+                if (varg.type.getCategory() == innerType.getCategory()){
+                    List<DictItem> listDict = (List<DictItem>) value.data;
+                    for (DictItem item : listDict){
+                        if(item.getKey() == varg.data){
+                            return new Value(BoolType.instance(), true);
+                        }
+                    }
+                }
+                return new Value(BoolType.instance(), false);
+            }
         return null;
     }
 
@@ -86,11 +103,22 @@ public class FunctionExpr extends Expr {
     }
    
     if (value.type instanceof DictType) {
-        DictExpr dict = (DictExpr) value.data;
-        Value dictValue = dict.expr();
-        HashMap<Value,Value> hashValue = (HashMap<Value, Value>) dictValue.data;
-        List<Value> listValue = (List<Value>) hashValue.keySet();
-        return new Value(ArrayType.instance(dict.getType()), listValue);
+        DictType dictType = (DictType) value.type;
+        Type keyType = dictType.getKeyType();
+        HashMap<?,?> dictHash = (HashMap<?,?>) value.data;
+        Set<?> dictSet = dictHash.keySet();
+        List<?> keyArray = null;
+        Type arrayType = null;
+        
+        if(keyType.match(StringType.instance())){
+            keyArray = (List<StringType>) dictHash.keySet();
+            arrayType = StringType.instance();
+        } else if (keyType.match(CharType.instance())){
+            keyArray = new ArrayList<>(dictSet); 
+            arrayType = CharType.instance();
+        }
+        
+        return new Value(ArrayType.instance(arrayType), keyArray);
     } else {
         throw new UnsupportedOperationException("Operação 'keys' não suportada para o tipo de valor fornecido");
     }

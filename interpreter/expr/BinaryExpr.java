@@ -4,6 +4,8 @@ import error.LanguageException;
 import interpreter.type.primitive.BoolType;
 import interpreter.type.primitive.FloatType;
 import interpreter.type.primitive.IntType;
+import interpreter.type.primitive.StringType;
+import interpreter.type.primitive.CharType;
 import interpreter.value.Value;
 
 public class BinaryExpr extends Expr {
@@ -118,6 +120,7 @@ public class BinaryExpr extends Expr {
 
     private Value equalOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
+        CharType charType = CharType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -127,13 +130,22 @@ public class BinaryExpr extends Expr {
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
             }
+        } else if (charType.match(lvalue.type)) {
+            if (charType.match(rvalue.type)) {
+                char m = (char) lvalue.data;
+                char n = (char) rvalue.data;
+                Value v = new Value(BoolType.instance(), (m == n));
+                return v;
+            } 
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }
+        return null;
     }
 
     private Value notEqualOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
+        CharType charType = CharType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -143,9 +155,17 @@ public class BinaryExpr extends Expr {
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
             }
+        } else if (charType.match(lvalue.type)) {
+            if (charType.match(rvalue.type)) {
+                char m = (char) lvalue.data;
+                char n = (char) rvalue.data;
+                Value v = new Value(BoolType.instance(), (m != n));
+                return v;
+            } 
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }
+        return null;
     }
 
     private Value lowerThanOp(Value lvalue, Value rvalue) {
@@ -170,10 +190,12 @@ public class BinaryExpr extends Expr {
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }
+        return null;
     }
 
     private Value lowerEqualOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
+        CharType charType = CharType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -183,13 +205,22 @@ public class BinaryExpr extends Expr {
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
             }
+        } else if (charType.match(lvalue.type)) {
+            if (charType.match(rvalue.type)) {
+                char m = (char) lvalue.data;
+                char n = (char) rvalue.data;
+                Value v = new Value(BoolType.instance(), (m <= n));
+                return v;
+            } 
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }
+        return null;
     }
 
     private Value greaterThanOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
+        CharType charType = CharType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -199,13 +230,22 @@ public class BinaryExpr extends Expr {
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
             }
+        } else if (charType.match(lvalue.type)) {
+            if (charType.match(rvalue.type)) {
+                char m = (char) lvalue.data;
+                char n = (char) rvalue.data;
+                Value v = new Value(BoolType.instance(), (m > n));
+                return v;
+            } 
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }
+        return null;
     }
 
     private Value greaterEqualOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
+        CharType charType = CharType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -215,14 +255,23 @@ public class BinaryExpr extends Expr {
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
             }
+        } else if (charType.match(lvalue.type)) {
+            if (charType.match(rvalue.type)) {
+                char m = (char) lvalue.data;
+                char n = (char) rvalue.data;
+                Value v = new Value(BoolType.instance(), (m >= n));
+                return v;
+            } 
         } else {
             throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, lvalue.type.toString());
         }
+        return null;
     }
 
     private Value addOp(Value lvalue, Value rvalue) {
         IntType intType = IntType.instance();
         FloatType floatType = FloatType.instance();
+        StringType stringType = StringType.instance();
         if (intType.match(lvalue.type)) {
             if (intType.match(rvalue.type)) {
                 int m = (Integer) lvalue.data;
@@ -238,6 +287,16 @@ public class BinaryExpr extends Expr {
                 float n = (Float) rvalue.data;
 
                 Value v = new Value(floatType, (m + n));
+                return v;
+            } else {
+                throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());
+            }
+        } else if (stringType.match(lvalue.type)) {
+            if (stringType.match(rvalue.type)) {
+                String m = (String) lvalue.data;
+                String n = (String) rvalue.data;
+
+                Value v = new Value(stringType, (m + n));
                 return v;
             } else {
                 throw LanguageException.instance(super.getLine(), LanguageException.Error.InvalidType, rvalue.type.toString());

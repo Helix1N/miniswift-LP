@@ -1,6 +1,8 @@
 package interpreter.expr;
 
 import interpreter.type.Type;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -19,14 +21,18 @@ public class DictExpr extends Expr{
 
     @Override
     public Value expr() {
-        HashMap<Value, Value> dictMap = new HashMap<>();
-        for (DictItem item : items) {
+        System.out.println(items);
+        System.out.println("^Items DicExpr");
+        List<DictItem> listDictItems = new ArrayList<>(items);
+        System.out.println(listDictItems);
+        System.out.println("^DictExpr retorno");
+        /*for (DictItem item : items) {
             Value key = item.key.expr();     
             Value value = item.value.expr(); 
             dictMap.put(key, value);
-        }
+        }*/
         //Possivelmente errado
-        return new Value(type, dictMap);
+        return new Value(type, listDictItems);
     }
     
     public Type getType(){
